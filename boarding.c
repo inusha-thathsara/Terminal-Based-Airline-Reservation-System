@@ -9,10 +9,12 @@
 #include "types.h"
 #include "ui.h"
 #include "boarding.h"
+#include "passengers.h"
 
 StackNode* boardingTop = NULL;
 
 int isDuplicateBoarding(int id) {
+    if (!passengerIDExists(id)) return 2;
     StackNode* curr = boardingTop;
     while (curr) { if (curr->passengerID == id) return 1; curr = curr->next; }
     return 0;
@@ -27,9 +29,9 @@ void pushBoarding() {
     boxSep();
     boxEmpty();
     printf("  | Passenger ID    : "); scanf("%d", &n->passengerID);
-    if (isDuplicateBoarding(n->passengerID)) {
-        msgERR("Passenger already on board!"); free(n); return;
-    }
+    int dup = isDuplicateBoarding(n->passengerID);
+    if (dup == 2) { msgERR("Passenger ID not found in system!"); free(n); return; }
+    if (dup == 1) { msgERR("Passenger already on board!"); free(n); return; }
     printf("  | Passenger Name  : "); scanf(" %[^\n]", n->passengerName);
     printf("  | Seat Number     : "); scanf(" %s", n->seatNumber);
     sprintf(n->boardingPass, "BP-%04d", n->passengerID);
