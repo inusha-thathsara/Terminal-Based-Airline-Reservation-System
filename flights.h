@@ -4,7 +4,7 @@
 #include "types.h"
 
 // ============================================================
-//  MEMBER 2 — FLIGHT OPERATIONS
+//  MEMBER 2 ï¿½ FLIGHT OPERATIONS
 // ============================================================
 
 extern FlightNode* flightHead;
