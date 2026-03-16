@@ -4,7 +4,7 @@
 #include "types.h"
 
 // ============================================================
-//  MEMBER 2 � FLIGHT OPERATIONS
+//  Inusha Gunasekara (244068K) � FLIGHT OPERATIONS
 // ============================================================
 
 extern FlightNode* flightHead;
