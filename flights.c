@@ -42,14 +42,14 @@ void addFlight() {
     printf("  | Total Seats     : "); scanf("%d", &n->totalSeats);
     n->availableSeats = n->totalSeats;
     strcpy(n->status, "On-Time");
-    n->next = NULL; n->prev = NULL;
+    n->next = NULL;
     boxEmpty();
     boxBottom();
     if (!flightHead) { flightHead = n; }
     else {
         FlightNode* t = flightHead;
         while (t->next) t = t->next;
-        t->next = n; n->prev = t;
+        t->next = n;
     }
     char msg[120];
     sprintf(msg, "Flight %s to %s scheduled!", n->flightNumber, n->destination);
@@ -65,7 +65,6 @@ void removeFlight() {
         if (strcmp(curr->flightNumber, fn) == 0) {
             if (prev) prev->next = curr->next;
             else flightHead = curr->next;
-            if (curr->next) curr->next->prev = prev;
             char msg[60]; sprintf(msg, "Flight %s cancelled and removed.", fn);
             free(curr); msgOK(msg); return;
         }
