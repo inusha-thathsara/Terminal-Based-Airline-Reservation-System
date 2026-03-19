@@ -1,5 +1,5 @@
 // ============================================================
-//  Inusha Gunasekara (244068K) — FLIGHT OPERATIONS
+//  MEMBER 2 — FLIGHT OPERATIONS
 //  Data Structure: SINGLY LINKED LIST
 // ============================================================
 
