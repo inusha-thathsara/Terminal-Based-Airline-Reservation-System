@@ -4,19 +4,18 @@
 #include "types.h"
 
 // ============================================================
-//  MEMBER 7 — FLIGHT SCHEDULE
+//  MEMBER 7 — FLIGHT SCHEDULE (ARRAY + SORTING + RECURSION)
 // ============================================================
 
-extern ScheduleEntry schedule[];
-extern int           scheduleCount;
-
-int  scheduleEntryExists(const char* fn);
-void addScheduleEntry();
-void displaySortedSchedule();
-void bubbleSort();
-void insertionSort();
-void selectionSort();
-void recursiveSearch(int index, char* query);
-void scheduleMenu();
+int  scheduleEntryExists(struct ScheduleEntry schedule[], int count, char* fn);
+void addScheduleEntry(struct ScheduleEntry schedule[], int* count);
+void displaySortedSchedule(struct ScheduleEntry schedule[], int count);
+void bubbleSort(struct ScheduleEntry schedule[], int count);
+void insertionSort(struct ScheduleEntry schedule[], int count);
+void selectionSort(struct ScheduleEntry schedule[], int count);
+void recursiveSearch(struct ScheduleEntry schedule[], int count,
+                     int index, char* query);
+void scheduleStatistics(struct ScheduleEntry schedule[], int count);
+void scheduleMenu(struct ScheduleEntry schedule[], int* count);
 
 #endif

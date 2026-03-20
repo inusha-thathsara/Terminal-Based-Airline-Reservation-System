@@ -1,9 +1,10 @@
-
 #ifndef UI_H
 #define UI_H
 
+#include "types.h"
+
 // ============================================================
-//  SKYPORT TERMINAL — UI HELPER DECLARATIONS
+//  SKYPORT TERMINAL — UI DECLARATIONS
 // ============================================================
 
 void clrscr();
@@ -24,6 +25,6 @@ void getCurrentTime(char* buf);
 void getCurrentDate(char* buf);
 void splashScreen();
 void printHeader(const char* module);
-void printFlightBoard();
+void printFlightBoard(struct FlightList* list);
 
-#endif // UI_H
+#endif

@@ -16,13 +16,37 @@
 #include "schedule.h"
 
 int main() {
-    initQueue();
-    splashScreen();
+
+    // ─── Declare all data structures ─────────────────────────
+    struct Passenger     passengers[MAX_PASSENGERS];
+    int                  passengerCount = 0;
+
+    struct FlightList    flightList;
+    struct BaggageList   baggageList;
+    struct GateList      gateList;
+    struct Stack         boardingStack;
+    struct Queue         runwayQueue;
+
+    struct ScheduleEntry schedule[MAX_SCHEDULE];
+    int                  scheduleCount = 0;
 
     int choice;
+
+    // ─── Initialize all data structures ──────────────────────
+    initFlightList(&flightList);
+    initBaggageList(&baggageList);
+    initGateList(&gateList);
+    initStack(&boardingStack);
+    initQueue(&runwayQueue);
+
+    // ─── Splash Screen ────────────────────────────────────────
+    splashScreen();
+
+    // ─── Main Menu Loop ───────────────────────────────────────
     do {
         printHeader("MAIN TERMINAL");
-        printFlightBoard();
+        printFlightBoard(&flightList);
+
         printf("\n");
         boxDbl();
         boxEmpty();
@@ -45,13 +69,13 @@ int main() {
         scanf("%d", &choice);
 
         switch(choice) {
-            case 1: passengerMenu(); break;
-            case 2: flightMenu();    break;
-            case 3: baggageMenu();   break;
-            case 4: gateMenu();      break;
-            case 5: boardingMenu();  break;
-            case 6: runwayMenu();    break;
-            case 7: scheduleMenu();  break;
+            case 1: passengerMenu(passengers, &passengerCount); break;
+            case 2: flightMenu(&flightList);                   break;
+            case 3: baggageMenu(&baggageList);                 break;
+            case 4: gateMenu(&gateList);                       break;
+            case 5: boardingMenu(&boardingStack);              break;
+            case 6: runwayMenu(&runwayQueue);                  break;
+            case 7: scheduleMenu(schedule, &scheduleCount);    break;
             case 0:
                 clrscr();
                 printf("\n\n");

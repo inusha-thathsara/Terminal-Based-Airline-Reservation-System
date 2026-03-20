@@ -10,67 +10,133 @@
 #include "ui.h"
 #include "baggage.h"
 
-BaggageNode* baggageHead = NULL;
+// ─── Initialize List ──────────────────────────────────────────
+void initBaggageList(struct BaggageList* list) {
+    list->head = NULL;
+    list->tail = NULL;
+}
 
-int baggageIDExists(int id) {
-    BaggageNode* curr = baggageHead;
-    while (curr) { if (curr->baggageID == id) return 1; curr = curr->next; }
+// ─── Create New Baggage Node ──────────────────────────────────
+struct BaggageNode* createBaggageNode(int baggageID, int passengerID,
+                                       char* ownerName, float weight) {
+    struct BaggageNode* newNode;
+    newNode = (struct BaggageNode*)malloc(sizeof(struct BaggageNode));
+
+    if (newNode == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+
+    newNode->baggageID   = baggageID;
+    newNode->passengerID = passengerID;
+    strcpy(newNode->ownerName, ownerName);
+    newNode->weight = weight;
+    sprintf(newNode->tag, "TAG-%04d", baggageID);
+    strcpy(newNode->status, "Checked-In");
+    newNode->next = NULL;
+    newNode->prev = NULL;
+
+    return newNode;
+}
+
+// ─── Check Duplicate ──────────────────────────────────────────
+int baggageIDExists(struct BaggageList* list, int id) {
+    struct BaggageNode* temp = list->head;
+    while (temp != NULL) {
+        if (temp->baggageID == id) return 1;
+        temp = temp->next;
+    }
     return 0;
 }
 
-void addBaggage() {
-    BaggageNode* n = (BaggageNode*)malloc(sizeof(BaggageNode));
-    if (!n) { msgERR("Memory allocation failed."); return; }
+// ─── 1. Add Baggage (Insert Rear) ────────────────────────────
+void addBaggage(struct BaggageList* list) {
+    int baggageID, passengerID;
+    char ownerName[MAX_NAME];
+    float weight;
+    struct BaggageNode* newNode;
+    char msg[100];
+
     printf("\n");
     boxTop();
     boxTitle("BAGGAGE CHECK-IN");
     boxSep();
     boxEmpty();
-    printf("  | Baggage Tag ID  : "); scanf("%d", &n->baggageID);
-    if (baggageIDExists(n->baggageID)) {
-        msgERR("Baggage ID already exists!"); free(n); return;
+    printf("  | Baggage Tag ID  : "); scanf("%d", &baggageID);
+
+    if (baggageIDExists(list, baggageID)) {
+        msgERR("Baggage ID already exists!"); return;
     }
-    printf("  | Passenger ID    : "); scanf("%d", &n->passengerID);
-    printf("  | Owner Name      : "); scanf(" %[^\n]", n->ownerName);
-    printf("  | Weight (kg)     : "); scanf("%f", &n->weight);
-    sprintf(n->tag, "TAG-%04d", n->baggageID);
-    strcpy(n->status, "Checked-In");
-    n->next = NULL; n->prev = NULL;
+
+    printf("  | Passenger ID    : "); scanf("%d", &passengerID);
+    printf("  | Owner Name      : "); scanf(" %[^\n]", ownerName);
+    printf("  | Weight (kg)     : "); scanf("%f", &weight);
     boxEmpty();
     boxBottom();
-    if (n->weight > 30.0)
+
+    if (weight > 30.0) {
         msgWARN("Baggage exceeds 30kg! Additional charges apply.");
-    if (!baggageHead) { baggageHead = n; }
-    else {
-        BaggageNode* curr = baggageHead;
-        while (curr->next) curr = curr->next;
-        curr->next = n; n->prev = curr;
     }
-    char msg[80];
-    sprintf(msg, "Baggage checked in. Tag: %s | Weight: %.1f kg", n->tag, n->weight);
+
+    newNode = createBaggageNode(baggageID, passengerID, ownerName, weight);
+    if (newNode == NULL) return;
+
+    // Insert at rear — doubly linked list
+    if (list->head == NULL) {
+        list->head = newNode;
+        list->tail = newNode;
+    } else {
+        list->tail->next = newNode;
+        newNode->prev    = list->tail;
+        list->tail       = newNode;
+    }
+
+    sprintf(msg, "Baggage checked in. Tag: TAG-%04d | Weight: %.1f kg",
+            baggageID, weight);
     msgOK(msg);
 }
 
-void removeBaggage() {
-    if (!baggageHead) { msgERR("No baggage records."); return; }
+// ─── 2. Remove Baggage ────────────────────────────────────────
+void removeBaggage(struct BaggageList* list) {
     int id;
+    struct BaggageNode* temp;
+    char msg[50];
+
+    if (list->head == NULL) { msgERR("No baggage records."); return; }
+
     printf("\n  Enter Baggage Tag ID to remove: "); scanf("%d", &id);
-    BaggageNode* curr = baggageHead;
-    while (curr) {
-        if (curr->baggageID == id) {
-            if (curr->prev) curr->prev->next = curr->next;
-            else baggageHead = curr->next;
-            if (curr->next) curr->next->prev = curr->prev;
-            char msg[50]; sprintf(msg, "Baggage TAG-%04d removed.", id);
-            free(curr); msgOK(msg); return;
+
+    temp = list->head;
+    while (temp != NULL) {
+        if (temp->baggageID == id) {
+            // Update prev link
+            if (temp->prev != NULL) {
+                temp->prev->next = temp->next;
+            } else {
+                list->head = temp->next;
+            }
+            // Update next link
+            if (temp->next != NULL) {
+                temp->next->prev = temp->prev;
+            } else {
+                list->tail = temp->prev;
+            }
+            sprintf(msg, "Baggage TAG-%04d removed.", id);
+            free(temp);
+            msgOK(msg);
+            return;
         }
-        curr = curr->next;
+        temp = temp->next;
     }
     msgERR("Baggage ID not found.");
 }
 
-void displayForward() {
-    if (!baggageHead) { msgERR("No baggage records."); return; }
+// ─── 3. Display Forward (Head to Tail) ───────────────────────
+void displayForward(struct BaggageList* list) {
+    struct BaggageNode* temp;
+
+    if (list->head == NULL) { msgERR("No baggage records."); return; }
+
     printf("\n");
     boxTop();
     boxTitle("BAGGAGE MANIFEST  [FORWARD SCAN]");
@@ -78,20 +144,24 @@ void displayForward() {
     printf("  | %-10s | %-6s | %-18s | %-8s | %-12s |\n",
            "TAG","PAX ID","OWNER","WEIGHT","STATUS");
     boxSep();
-    BaggageNode* curr = baggageHead;
-    while (curr) {
+
+    // Traverse from head to tail
+    temp = list->head;
+    while (temp != NULL) {
         printf("  | %-10s | %-6d | %-18s | %-8.1f | %-12s |\n",
-            curr->tag, curr->passengerID,
-            curr->ownerName, curr->weight, curr->status);
-        curr = curr->next;
+            temp->tag, temp->passengerID,
+            temp->ownerName, temp->weight, temp->status);
+        temp = temp->next;
     }
     boxBottom();
 }
 
-void displayBackward() {
-    if (!baggageHead) { msgERR("No baggage records."); return; }
-    BaggageNode* tail = baggageHead;
-    while (tail->next) tail = tail->next;
+// ─── 4. Display Backward (Tail to Head) ──────────────────────
+void displayBackward(struct BaggageList* list) {
+    struct BaggageNode* temp;
+
+    if (list->head == NULL) { msgERR("No baggage records."); return; }
+
     printf("\n");
     boxTop();
     boxTitle("BAGGAGE MANIFEST  [REVERSE SCAN]");
@@ -99,21 +169,27 @@ void displayBackward() {
     printf("  | %-10s | %-6s | %-18s | %-8s | %-12s |\n",
            "TAG","PAX ID","OWNER","WEIGHT","STATUS");
     boxSep();
-    BaggageNode* curr = tail;
-    while (curr) {
+
+    // Traverse from tail to head using prev pointer
+    temp = list->tail;
+    while (temp != NULL) {
         printf("  | %-10s | %-6d | %-18s | %-8.1f | %-12s |\n",
-            curr->tag, curr->passengerID,
-            curr->ownerName, curr->weight, curr->status);
-        curr = curr->prev;
+            temp->tag, temp->passengerID,
+            temp->ownerName, temp->weight, temp->status);
+        temp = temp->prev;
     }
     boxBottom();
 }
 
-void searchBaggage() {
-    if (!baggageHead) { msgERR("No baggage records."); return; }
-    int pid;
+// ─── 5. Search Baggage by Passenger ID ───────────────────────
+void searchBaggage(struct BaggageList* list) {
+    int pid, found = 0;
+    struct BaggageNode* temp;
+
+    if (list->head == NULL) { msgERR("No baggage records."); return; }
+
     printf("\n  Enter Passenger ID: "); scanf("%d", &pid);
-    int found = 0;
+
     printf("\n");
     boxTop();
     boxTitle("BAGGAGE SEARCH RESULTS");
@@ -121,41 +197,50 @@ void searchBaggage() {
     printf("  | %-10s | %-6s | %-18s | %-8s | %-12s |\n",
            "TAG","PAX ID","OWNER","WEIGHT","STATUS");
     boxSep();
-    BaggageNode* curr = baggageHead;
-    while (curr) {
-        if (curr->passengerID == pid) {
+
+    temp = list->head;
+    while (temp != NULL) {
+        if (temp->passengerID == pid) {
             printf("  | %-10s | %-6d | %-18s | %-8.1f | %-12s |\n",
-                curr->tag, curr->passengerID,
-                curr->ownerName, curr->weight, curr->status);
+                temp->tag, temp->passengerID,
+                temp->ownerName, temp->weight, temp->status);
             found++;
         }
-        curr = curr->next;
+        temp = temp->next;
     }
     boxBottom();
     if (!found) msgERR("No baggage found for this passenger.");
 }
 
-void baggageStatistics() {
-    if (!baggageHead) { msgERR("No baggage records."); return; }
-    int count = 0; float total = 0, heaviest = 0;
-    BaggageNode* curr = baggageHead;
-    while (curr) {
-        count++; total += curr->weight;
-        if (curr->weight > heaviest) heaviest = curr->weight;
-        curr = curr->next;
+// ─── 6. Baggage Statistics — Additional Function ──────────────
+void baggageStatistics(struct BaggageList* list) {
+    struct BaggageNode* temp;
+    int count = 0;
+    float total = 0, heaviest = 0;
+
+    if (list->head == NULL) { msgERR("No baggage records."); return; }
+
+    temp = list->head;
+    while (temp != NULL) {
+        count++;
+        total += temp->weight;
+        if (temp->weight > heaviest) heaviest = temp->weight;
+        temp = temp->next;
     }
+
     printf("\n");
     boxTop();
     boxTitle("BAGGAGE LOAD REPORT");
     boxSep();
     printf("  | %-30s : %-30d |\n",   "Total Bags Checked",  count);
     printf("  | %-30s : %-29.1f  |\n","Total Weight (kg)",   total);
-    printf("  | %-30s : %-29.1f  |\n","Average Weight (kg)", total/count);
+    printf("  | %-30s : %-29.1f  |\n","Average Weight (kg)", total / count);
     printf("  | %-30s : %-29.1f  |\n","Heaviest Bag (kg)",   heaviest);
     boxBottom();
 }
 
-void baggageMenu() {
+// ─── Menu ─────────────────────────────────────────────────────
+void baggageMenu(struct BaggageList* list) {
     int c;
     do {
         printHeader("BAGGAGE SERVICES");
@@ -177,13 +262,14 @@ void baggageMenu() {
         boxEmpty();
         boxDbl();
         printf("\n  BAGGAGE SERVICES > "); scanf("%d", &c);
+
         switch(c) {
-            case 1: addBaggage();        break;
-            case 2: removeBaggage();     break;
-            case 3: displayForward();    break;
-            case 4: displayBackward();   break;
-            case 5: searchBaggage();     break;
-            case 6: baggageStatistics(); break;
+            case 1: addBaggage(list);        break;
+            case 2: removeBaggage(list);     break;
+            case 3: displayForward(list);    break;
+            case 4: displayBackward(list);   break;
+            case 5: searchBaggage(list);     break;
+            case 6: baggageStatistics(list); break;
             case 0: break;
             default: msgERR("Invalid selection.");
         }

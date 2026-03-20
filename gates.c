@@ -10,89 +10,153 @@
 #include "ui.h"
 #include "gates.h"
 
-GateNode* gateHead = NULL;
+// ─── Initialize List ──────────────────────────────────────────
+void initGateList(struct GateList* list) {
+    list->head = NULL;
+}
 
-int gateExists(int gateNum) {
-    if (!gateHead) return 0;
-    GateNode* curr = gateHead;
+// ─── Create New Gate Node ─────────────────────────────────────
+struct GateNode* createGateNode(int gateNumber, char* terminal) {
+    struct GateNode* newNode;
+    newNode = (struct GateNode*)malloc(sizeof(struct GateNode));
+
+    if (newNode == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+
+    newNode->gateNumber   = gateNumber;
+    strcpy(newNode->terminal,       terminal);
+    strcpy(newNode->status,         "Available");
+    strcpy(newNode->assignedFlight, "------");
+    strcpy(newNode->lastFlight,     "------");
+    newNode->historyCount = 0;
+    newNode->next         = NULL;
+
+    return newNode;
+}
+
+// ─── Check Duplicate ──────────────────────────────────────────
+int gateExists(struct GateList* list, int gateNum) {
+    struct GateNode* temp;
+
+    if (list->head == NULL) return 0;
+
+    temp = list->head;
     do {
-        if (curr->gateNumber == gateNum) return 1;
-        curr = curr->next;
-    } while (curr != gateHead);
+        if (temp->gateNumber == gateNum) return 1;
+        temp = temp->next;
+    } while (temp != list->head);
+
     return 0;
 }
 
-void addGate() {
-    GateNode* n = (GateNode*)malloc(sizeof(GateNode));
-    if (!n) { msgERR("Memory allocation failed."); return; }
-    printf("\n  Enter Gate Number     : "); scanf("%d", &n->gateNumber);
-    if (gateExists(n->gateNumber)) {
-        msgERR("Gate already exists!"); free(n); return;
-    }
-    printf("  Enter Terminal (A/B/C): "); scanf(" %s", n->terminal);
-    strcpy(n->status, "Available");
-    strcpy(n->assignedFlight, "------");
-    strcpy(n->lastFlight,     "------");
-    n->historyCount = 0;
-    if (!gateHead) { n->next = n; gateHead = n; }
-    else {
-        GateNode* tail = gateHead;
-        while (tail->next != gateHead) tail = tail->next;
-        tail->next = n; n->next = gateHead;
-    }
+// ─── 1. Add Gate ──────────────────────────────────────────────
+void addGate(struct GateList* list) {
+    int gateNumber;
+    char terminal[10];
+    struct GateNode* newNode;
+    struct GateNode* tail;
     char msg[60];
-    sprintf(msg, "Gate %d (Terminal %s) added.", n->gateNumber, n->terminal);
+
+    printf("\n  Enter Gate Number     : "); scanf("%d", &gateNumber);
+
+    if (gateExists(list, gateNumber)) {
+        msgERR("Gate already exists!"); return;
+    }
+
+    printf("  Enter Terminal (A/B/C): "); scanf(" %s", terminal);
+
+    newNode = createGateNode(gateNumber, terminal);
+    if (newNode == NULL) return;
+
+    // Insert into circular linked list
+    if (list->head == NULL) {
+        // First node points to itself
+        newNode->next = newNode;
+        list->head    = newNode;
+    } else {
+        // Find tail (node that points back to head)
+        tail = list->head;
+        while (tail->next != list->head) {
+            tail = tail->next;
+        }
+        tail->next    = newNode;
+        newNode->next = list->head;
+    }
+
+    sprintf(msg, "Gate %d (Terminal %s) added.", gateNumber, terminal);
     msgOK(msg);
 }
 
-void assignGate() {
-    if (!gateHead) { msgERR("No gates available."); return; }
+// ─── 2. Assign Gate to Flight ─────────────────────────────────
+void assignGate(struct GateList* list) {
     char fn[MAX_FLIGHT_NO];
+    struct GateNode* temp;
+    char msg[80];
+
+    if (list->head == NULL) { msgERR("No gates available."); return; }
+
     printf("\n  Enter Flight Number to assign: "); scanf(" %s", fn);
-    GateNode* curr = gateHead;
+
+    // Rotate through circular list to find available gate
+    temp = list->head;
     do {
-        if (strcmp(curr->status, "Available") == 0) {
-            strcpy(curr->status, "Occupied");
-            strcpy(curr->assignedFlight, fn);
-            strcpy(curr->lastFlight, fn);
-            if (curr->historyCount < 3)
-                strcpy(curr->history[curr->historyCount++], fn);
-            char msg[80];
+        if (strcmp(temp->status, "Available") == 0) {
+            strcpy(temp->status,         "Occupied");
+            strcpy(temp->assignedFlight, fn);
+            strcpy(temp->lastFlight,     fn);
+            if (temp->historyCount < 3) {
+                strcpy(temp->history[temp->historyCount], fn);
+                temp->historyCount++;
+            }
             sprintf(msg, "Gate %d (Terminal %s) assigned to Flight %s.",
-                    curr->gateNumber, curr->terminal, fn);
-            msgOK(msg); return;
+                    temp->gateNumber, temp->terminal, fn);
+            msgOK(msg);
+            return;
         }
-        curr = curr->next;
-    } while (curr != gateHead);
+        temp = temp->next;
+    } while (temp != list->head);
+
     msgERR("No available gates at this time.");
 }
 
-void releaseGate() {
-    if (!gateHead) { msgERR("No gates in system."); return; }
+// ─── 3. Release Gate ──────────────────────────────────────────
+void releaseGate(struct GateList* list) {
     int gnum;
+    struct GateNode* temp;
+    char msg[80];
+
+    if (list->head == NULL) { msgERR("No gates in system."); return; }
+
     printf("\n  Enter Gate Number to release: "); scanf("%d", &gnum);
-    GateNode* curr = gateHead;
+
+    temp = list->head;
     do {
-        if (curr->gateNumber == gnum) {
-            if (strcmp(curr->status, "Available") == 0) {
+        if (temp->gateNumber == gnum) {
+            if (strcmp(temp->status, "Available") == 0) {
                 msgERR("Gate is already available.");
             } else {
-                char msg[80];
                 sprintf(msg, "Gate %d released. Flight %s has departed.",
-                        curr->gateNumber, curr->assignedFlight);
-                strcpy(curr->status, "Available");
-                strcpy(curr->assignedFlight, "------");
+                        temp->gateNumber, temp->assignedFlight);
+                strcpy(temp->status,         "Available");
+                strcpy(temp->assignedFlight, "------");
                 msgOK(msg);
             }
             return;
         }
-        curr = curr->next;
-    } while (curr != gateHead);
+        temp = temp->next;
+    } while (temp != list->head);
+
     msgERR("Gate not found.");
 }
 
-void displayAllGates() {
-    if (!gateHead) { msgERR("No gates registered."); return; }
+// ─── 4. Display All Gates ─────────────────────────────────────
+void displayAllGates(struct GateList* list) {
+    struct GateNode* temp;
+
+    if (list->head == NULL) { msgERR("No gates registered."); return; }
+
     printf("\n");
     boxTop();
     boxTitle("GATE STATUS BOARD");
@@ -100,41 +164,54 @@ void displayAllGates() {
     printf("  | %-6s | %-8s | %-13s | %-10s | %-10s |\n",
            "GATE","TERMINAL","STATUS","FLIGHT","LAST FLIGHT");
     boxSep();
-    GateNode* curr = gateHead;
+
+    temp = list->head;
     do {
         printf("  | %-6d | %-8s | %-13s | %-10s | %-10s |\n",
-            curr->gateNumber, curr->terminal,
-            curr->status, curr->assignedFlight, curr->lastFlight);
-        curr = curr->next;
-    } while (curr != gateHead);
+            temp->gateNumber, temp->terminal,
+            temp->status, temp->assignedFlight, temp->lastFlight);
+        temp = temp->next;
+    } while (temp != list->head);
+
     boxBottom();
 }
 
-void findAvailableGate() {
-    if (!gateHead) { msgERR("No gates in system."); return; }
-    GateNode* curr = gateHead;
+// ─── 5. Find Available Gate ───────────────────────────────────
+void findAvailableGate(struct GateList* list) {
+    struct GateNode* temp;
+    char msg[60];
+
+    if (list->head == NULL) { msgERR("No gates in system."); return; }
+
+    temp = list->head;
     do {
-        if (strcmp(curr->status, "Available") == 0) {
-            char msg[60];
+        if (strcmp(temp->status, "Available") == 0) {
             sprintf(msg, "Next available: Gate %d | Terminal %s",
-                    curr->gateNumber, curr->terminal);
-            msgOK(msg); return;
+                    temp->gateNumber, temp->terminal);
+            msgOK(msg);
+            return;
         }
-        curr = curr->next;
-    } while (curr != gateHead);
+        temp = temp->next;
+    } while (temp != list->head);
+
     msgERR("All gates are currently occupied.");
 }
 
-void gateStatistics() {
-    if (!gateHead) { msgERR("No gates."); return; }
+// ─── 6. Gate Statistics — Additional Function ─────────────────
+void gateStatistics(struct GateList* list) {
+    struct GateNode* temp;
     int total = 0, available = 0, occupied = 0;
-    GateNode* curr = gateHead;
+
+    if (list->head == NULL) { msgERR("No gates."); return; }
+
+    temp = list->head;
     do {
         total++;
-        if (strcmp(curr->status, "Available") == 0) available++;
+        if (strcmp(temp->status, "Available") == 0) available++;
         else occupied++;
-        curr = curr->next;
-    } while (curr != gateHead);
+        temp = temp->next;
+    } while (temp != list->head);
+
     printf("\n");
     boxTop();
     boxTitle("GATE CONTROL STATISTICS");
@@ -145,85 +222,136 @@ void gateStatistics() {
     boxBottom();
 }
 
-void gateHistory() {
-    if (!gateHead) { msgERR("No gates."); return; }
+// ─── 7. Gate History ──────────────────────────────────────────
+void gateHistory(struct GateList* list) {
+    struct GateNode* temp;
+    int i;
+
+    if (list->head == NULL) { msgERR("No gates."); return; }
+
     printf("\n");
     boxTop();
     boxTitle("GATE FLIGHT HISTORY LOG");
     boxSep();
-    GateNode* curr = gateHead;
+
+    temp = list->head;
     do {
         printf("  | Gate %-3d | Terminal %-3s | Last: %-8s | History: ",
-               curr->gateNumber, curr->terminal, curr->lastFlight);
-        if (curr->historyCount == 0) printf("None");
-        else for (int i = 0; i < curr->historyCount; i++)
-            printf("[%s] ", curr->history[i]);
+               temp->gateNumber, temp->terminal, temp->lastFlight);
+        if (temp->historyCount == 0) printf("None");
+        else {
+            for (i = 0; i < temp->historyCount; i++)
+                printf("[%s] ", temp->history[i]);
+        }
         printf("\n");
-        curr = curr->next;
-    } while (curr != gateHead);
+        temp = temp->next;
+    } while (temp != list->head);
+
     boxBottom();
 }
 
-void emergencyReleaseAllGates() {
-    if (!gateHead) { msgERR("No gates."); return; }
+// ─── 8. Emergency Release All Gates ──────────────────────────
+void emergencyReleaseAllGates(struct GateList* list) {
+    struct GateNode* temp;
+    int count = 0;
+    char msg[60];
+
+    if (list->head == NULL) { msgERR("No gates."); return; }
+
     msgWARN("EMERGENCY PROTOCOL ACTIVATED — Releasing all gates...");
     printf("\n");
-    int count = 0;
-    GateNode* curr = gateHead;
+
+    temp = list->head;
     do {
-        if (strcmp(curr->status, "Occupied") == 0) {
+        if (strcmp(temp->status, "Occupied") == 0) {
             printf("  [ -- ]  Gate %-3d released | Flight %s cleared\n",
-                   curr->gateNumber, curr->assignedFlight);
-            strcpy(curr->status, "Available");
-            strcpy(curr->assignedFlight, "------");
+                   temp->gateNumber, temp->assignedFlight);
+            strcpy(temp->status,         "Available");
+            strcpy(temp->assignedFlight, "------");
             count++;
         }
-        curr = curr->next;
-    } while (curr != gateHead);
+        temp = temp->next;
+    } while (temp != list->head);
+
     if (count == 0) msgINFO("All gates were already available.");
-    else { char msg[60]; sprintf(msg, "EMERGENCY RELEASE COMPLETE: %d gate(s) cleared.", count); msgOK(msg); }
+    else {
+        sprintf(msg, "EMERGENCY RELEASE COMPLETE: %d gate(s) cleared.", count);
+        msgOK(msg);
+    }
 }
 
-GateNode* deleteGate(GateNode* head) {
-    if (!head) { msgERR("No gates to delete."); return NULL; }
+// ─── 9. Delete Gate ───────────────────────────────────────────
+void deleteGate(struct GateList* list) {
     int gateNum;
+    struct GateNode* temp;
+    struct GateNode* prev;
+    struct GateNode* tail;
+    char msg[50];
+
+    if (list->head == NULL) { msgERR("No gates to delete."); return; }
+
     printf("\n  Enter Gate Number to decommission: "); scanf("%d", &gateNum);
-    GateNode* curr = head;
+
+    // Check if occupied
+    temp = list->head;
     do {
-        if (curr->gateNumber == gateNum) {
-            if (strcmp(curr->status, "Occupied") == 0) {
+        if (temp->gateNumber == gateNum) {
+            if (strcmp(temp->status, "Occupied") == 0) {
                 msgERR("Cannot decommission occupied gate! Release it first.");
-                return head;
+                return;
             }
             break;
         }
-        curr = curr->next;
-    } while (curr != head);
-    if (head->next == head) {
-        char msg[50]; sprintf(msg, "Gate %d decommissioned.", head->gateNumber);
-        free(head); msgOK(msg); return NULL;
-    }
-    GateNode* prev2 = head; curr = head->next;
-    if (head->gateNumber == gateNum) {
-        GateNode* tail = head;
-        while (tail->next != head) tail = tail->next;
-        tail->next = head->next;
-        char msg[50]; sprintf(msg, "Gate %d decommissioned.", head->gateNumber);
-        GateNode* newHead = head->next;
-        free(head); msgOK(msg); return newHead;
-    }
-    while (curr != head) {
-        if (curr->gateNumber == gateNum) {
-            prev2->next = curr->next;
-            char msg[50]; sprintf(msg, "Gate %d decommissioned.", curr->gateNumber);
-            free(curr); msgOK(msg); return head;
+        temp = temp->next;
+    } while (temp != list->head);
+
+    // Only one gate
+    if (list->head->next == list->head) {
+        if (list->head->gateNumber == gateNum) {
+            sprintf(msg, "Gate %d decommissioned.", list->head->gateNumber);
+            free(list->head);
+            list->head = NULL;
+            msgOK(msg);
+        } else {
+            msgERR("Gate not found.");
         }
-        prev2 = curr; curr = curr->next;
+        return;
     }
-    msgERR("Gate not found."); return head;
+
+    // Find tail
+    tail = list->head;
+    while (tail->next != list->head) tail = tail->next;
+
+    // Delete head
+    if (list->head->gateNumber == gateNum) {
+        tail->next = list->head->next;
+        sprintf(msg, "Gate %d decommissioned.", list->head->gateNumber);
+        free(list->head);
+        list->head = tail->next;
+        msgOK(msg);
+        return;
+    }
+
+    // Delete non-head node
+    prev = list->head;
+    temp = list->head->next;
+    while (temp != list->head) {
+        if (temp->gateNumber == gateNum) {
+            prev->next = temp->next;
+            sprintf(msg, "Gate %d decommissioned.", temp->gateNumber);
+            free(temp);
+            msgOK(msg);
+            return;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+
+    msgERR("Gate not found.");
 }
 
-void gateMenu() {
+// ─── Menu ─────────────────────────────────────────────────────
+void gateMenu(struct GateList* list) {
     int c;
     do {
         printHeader("GATE CONTROL");
@@ -248,16 +376,17 @@ void gateMenu() {
         boxEmpty();
         boxDbl();
         printf("\n  GATE CONTROL > "); scanf("%d", &c);
+
         switch(c) {
-            case 1: addGate();                       break;
-            case 2: assignGate();                    break;
-            case 3: releaseGate();                   break;
-            case 4: displayAllGates();               break;
-            case 5: findAvailableGate();             break;
-            case 6: gateStatistics();                break;
-            case 7: gateHistory();                   break;
-            case 8: gateHead = deleteGate(gateHead); break;
-            case 9: emergencyReleaseAllGates();       break;
+            case 1: addGate(list);                  break;
+            case 2: assignGate(list);               break;
+            case 3: releaseGate(list);              break;
+            case 4: displayAllGates(list);          break;
+            case 5: findAvailableGate(list);        break;
+            case 6: gateStatistics(list);           break;
+            case 7: gateHistory(list);              break;
+            case 8: deleteGate(list);               break;
+            case 9: emergencyReleaseAllGates(list); break;
             case 0: break;
             default: msgERR("Invalid selection.");
         }

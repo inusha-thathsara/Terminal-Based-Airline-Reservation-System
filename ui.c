@@ -1,4 +1,3 @@
-
 // ============================================================
 //  SKYPORT TERMINAL — UI HELPERS
 // ============================================================
@@ -9,7 +8,6 @@
 #include <time.h>
 #include "types.h"
 #include "ui.h"
-#include "flights.h"
 
 void clrscr() { system("cls"); }
 
@@ -19,44 +17,49 @@ void pressEnter() {
 }
 
 void hline(char c) {
+    int i;
     printf("  ");
-    for (int i = 0; i < WIDTH; i++) printf("%c", c);
+    for (i = 0; i < WIDTH; i++) printf("%c", c);
     printf("\n");
 }
 
-void boxTop()    { printf("  +"); for(int i=0;i<WIDTH-2;i++) printf("-"); printf("+\n"); }
-void boxBottom() { printf("  +"); for(int i=0;i<WIDTH-2;i++) printf("-"); printf("+\n"); }
-void boxDbl()    { printf("  +"); for(int i=0;i<WIDTH-2;i++) printf("="); printf("+\n"); }
+void boxTop()    { int i; printf("  +"); for(i=0;i<WIDTH-2;i++) printf("-"); printf("+\n"); }
+void boxBottom() { int i; printf("  +"); for(i=0;i<WIDTH-2;i++) printf("-"); printf("+\n"); }
+void boxDbl()    { int i; printf("  +"); for(i=0;i<WIDTH-2;i++) printf("="); printf("+\n"); }
 
 void boxTitle(const char* text) {
     int len = strlen(text);
     int total = WIDTH - 4;
     int lpad = (total - len) / 2;
     int rpad = total - len - lpad;
+    int i;
     printf("  | ");
-    for (int i = 0; i < lpad; i++) printf(" ");
+    for (i = 0; i < lpad; i++) printf(" ");
     printf("%s", text);
-    for (int i = 0; i < rpad; i++) printf(" ");
+    for (i = 0; i < rpad; i++) printf(" ");
     printf(" |\n");
 }
 
 void boxRow(const char* text) {
     int len = strlen(text);
     int pad = WIDTH - 4 - len;
+    int i;
     printf("  | %s", text);
-    for (int i = 0; i < pad; i++) printf(" ");
+    for (i = 0; i < pad; i++) printf(" ");
     printf(" |\n");
 }
 
 void boxEmpty() {
+    int i;
     printf("  |");
-    for (int i = 0; i < WIDTH-2; i++) printf(" ");
+    for (i = 0; i < WIDTH-2; i++) printf(" ");
     printf("|\n");
 }
 
 void boxSep() {
+    int i;
     printf("  |");
-    for (int i = 0; i < WIDTH-2; i++) printf("-");
+    for (i = 0; i < WIDTH-2; i++) printf("-");
     printf("|\n");
 }
 
@@ -104,47 +107,53 @@ void splashScreen() {
 
 void printHeader(const char* module) {
     char time_str[20], date[20];
+    char left[60], right[60];
+    int llen, rlen, total, spaces, i;
+
     getCurrentTime(time_str);
     getCurrentDate(date);
     clrscr();
     printf("\n");
     boxDbl();
-    char left[60], right[60];
     sprintf(left,  "SKYPORT TERMINAL  |  %s", module);
     sprintf(right, "%s  %s", date, time_str);
-    int llen = strlen(left);
-    int rlen = strlen(right);
-    int total = WIDTH - 4;
-    int spaces = total - llen - rlen;
+    llen   = strlen(left);
+    rlen   = strlen(right);
+    total  = WIDTH - 4;
+    spaces = total - llen - rlen;
     if (spaces < 1) spaces = 1;
     printf("  | %s", left);
-    for (int i = 0; i < spaces; i++) printf(" ");
+    for (i = 0; i < spaces; i++) printf(" ");
     printf("%s |\n", right);
     boxDbl();
     printf("\n");
 }
 
-void printFlightBoard() {
-    extern FlightNode* flightHead;
+void printFlightBoard(struct FlightList* list) {
+    struct FlightNode* curr;
+    int count = 0;
+
     printf("\n");
     boxDbl();
     boxEmpty();
     boxTitle("~~  DEPARTURES / ARRIVALS BOARD  ~~");
     boxEmpty();
     boxDbl();
-    if (!flightHead) {
+
+    if (list->head == NULL) {
         boxEmpty();
         boxTitle("-- NO FLIGHTS SCHEDULED --");
         boxEmpty();
         boxBottom();
         return;
     }
+
     printf("  | %-9s | %-14s | %-14s | %-7s | %-5s | %-7s |\n",
            "FLIGHT","FROM","TO","TIME","GATE","STATUS");
     boxSep();
-    FlightNode* curr = flightHead;
-    int count = 0;
-    while (curr && count < 5) {
+
+    curr = list->head;
+    while (curr != NULL && count < 5) {
         printf("  | %-9s | %-14s | %-14s | %-7s | %-5s | %-7s |\n",
             curr->flightNumber, curr->origin, curr->destination,
             curr->departureTime, curr->gate, curr->status);
