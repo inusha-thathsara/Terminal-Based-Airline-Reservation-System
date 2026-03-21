@@ -1,175 +1,207 @@
-Airline Reservation System
+# Baggage Management Documentation
 
-Baggage Services Module Documentation
+---
 
-File Overview
+## File Overview
 
-Implementation File: baggage.c
-Header File: baggage.h
-Module Name: Baggage Services
-Data Structure Used: Doubly Linked List
+- Implementation file: `baggage.c`
+- Header file: `baggage.h`
+- Module name: Baggage Services
+- Purpose: Manage baggage records in the system
 
-Purpose of the Module
+---
 
-The Baggage Services module is responsible for managing all baggage-related operations in the Airport Flight Management System.
+## Purpose of the Module
 
-It allows users to:
+The baggage management module handles all baggage-related operations in the Airport Flight Management System. It allows the user to add, remove, search, display, and analyze baggage records. It also provides a summary of baggage load and statistics.
 
-Check-in baggage
-Remove baggage
-Search baggage by passenger
-View baggage records (forward & reverse)
-Generate baggage statistics
+This module is accessed from the main menu through the Baggage Services option.
 
-This module is accessed through the Baggage Services Menu in the system.
+---
 
-Data Structure Used
+## Files in the Module
 
-Doubly Linked List
+### `baggage.h`
 
-The baggage records are stored using a doubly linked list, which allows traversal in both directions.
+This header file contains:
+
+- function prototypes for all baggage operations
+- integration with `types.h` for structure definitions
+- declarations required for modular design
+
+---
+
+### `baggage.c`
+
+This source file contains:
+
+- implementation of all baggage operations
+- doubly linked list management logic
+- node creation and memory allocation
+- insertion, deletion, traversal, searching, and reporting functions
+
+---
+
+## Data Structure Used
+
+### Baggage List
+
+The module stores baggage records using a doubly linked list.
+
+```c
+struct BaggageList {
+    struct BaggageNode* head;
+    struct BaggageNode* tail;
+};
+
+The node structure is defined in types.h as BaggageNode.
+
+BaggageNode Fields
 
 Each node contains:
 
-Baggage ID
-Passenger ID
-Owner Name
-Weight
-Tag (auto-generated)
-Status
-Pointer to next node
-Pointer to previous node
-Structure Behavior
-head → points to the first baggage
-tail → points to the last baggage
+baggage ID
+passenger ID
+owner name
+weight
+tag (auto-generated)
+status
+next pointer
+prev pointer
+Important Note About the Data Structure
 
+The baggage module uses a doubly linked list, allowing:
+
+forward traversal using next
+backward traversal using prev
+Global Structure
+struct BaggageList list;
+
+Purpose:
+
+stores all baggage records
+provides access to both head and tail
 Functions in the Module
-1. initBaggageList()
+1. initBaggageList(struct BaggageList* list)
+Purpose
 
-Initializes the baggage list by setting head and tail to NULL.
+Initializes the baggage list.
 
-2. createBaggageNode()
+Method
+sets head = NULL
+sets tail = NULL
+Time Complexity
+O(1)
+2. createBaggageNode(...)
+Purpose
 
-Creates and initializes a new baggage node.
+Creates a new baggage node.
 
-Features:
-
-Allocates memory dynamically
-Generates tag automatically (TAG-XXXX)
-Sets default status to Checked-In
-3. baggageIDExists()
+Method
+allocates memory using malloc()
+assigns all baggage details
+generates tag
+sets default status
+Time Complexity
+O(1)
+3. baggageIDExists(struct BaggageList* list, int id)
+Purpose
 
 Checks if a baggage ID already exists.
 
-Algorithm: Linear Search
-Time Complexity: O(n)
+Method
+traverses from head
+compares IDs
+Algorithm Used
+linear search
+Time Complexity
+O(n)
+4. addBaggage(struct BaggageList* list)
+Purpose
 
-4. addBaggage()
+Adds a new baggage record.
 
-Adds a new baggage record to the system.
+Method
+reads user input
+checks duplicate ID
+warns if weight > 30kg
+inserts at tail
+Time Complexity
+O(n)
+5. removeBaggage(struct BaggageList* list)
+Purpose
 
-Steps:
+Removes a baggage record by ID.
 
-Takes user input
-Checks for duplicate ID
-Displays warning if weight > 30kg
-Inserts node at the end (tail insertion)
+Method
+searches node
+updates pointers
+frees memory
+Time Complexity
+O(n)
+6. displayForward(struct BaggageList* list)
+Purpose
 
-Time Complexity: O(n)
+Displays baggage from head to tail.
 
-5. removeBaggage()
+Time Complexity
+O(n)
+7. displayBackward(struct BaggageList* list)
+Purpose
 
-Removes baggage using its ID.
+Displays baggage from tail to head.
 
-Steps:
+Time Complexity
+O(n)
+8. searchBaggage(struct BaggageList* list)
+Purpose
 
-Searches for the node
-Updates both next and prev pointers
-Frees memory
+Searches baggage by passenger ID.
 
-Time Complexity: O(n)
+Time Complexity
+O(n)
+9. baggageStatistics(struct BaggageList* list)
+Purpose
 
-6. displayForward()
+Generates baggage report.
 
-Displays baggage records from head → tail.
+Includes:
+total bags
+total weight
+average weight
+heaviest bag
+Time Complexity
+O(n)
+10. baggageMenu(struct BaggageList* list)
+Purpose
 
-7. displayBackward()
-
-Displays baggage records from tail → head.
-
-This is only possible because of the doubly linked list.
-
-8. searchBaggage()
-
-Searches baggage by Passenger ID.
-
-Algorithm: Linear Search
-Time Complexity: O(n)
-
-9. baggageStatistics()
-
-Generates a report including:
-
-Total number of bags
-Total weight
-Average weight
-Heaviest baggage
-10. baggageMenu()
-
-Provides a user interface for all baggage operations.
-
-Uses:
-
-do-while loop
-switch-case for menu selection
+Menu system for baggage operations.
 
 Algorithms Used
-1. Linear Search
-
-Used in:
-
-Checking duplicate IDs
-Removing baggage
-Searching baggage
-2. Doubly Linked List Insertion
-New nodes are added at the tail
-3. Doubly Linked List Deletion
-Updates both previous and next pointers
-4. Traversal
-Forward traversal → using next
-Backward traversal → using prev
-
+Linear Search
+Doubly Linked List Insertion
+Doubly Linked List Deletion
+Traversal
 Memory Management
-
-Good Practices
-Uses malloc() for dynamic allocation
-Frees memory when removing nodes
-Prevents duplicate entries
+Efficient Practices
+uses malloc()
+frees memory on deletion
+prevents duplicates
 Limitations
-No full cleanup function to free all nodes at program exit
-
-Strengths of the Module
-
-Efficient forward and backward traversal
-Clean modular design
-Realistic baggage handling simulation
-Automatic tag generation
-Supports statistical analysis
-
-Limitations
-
-Limited input validation
-No global cleanup function
-Weight limit only gives warning (not enforced)
-
+no full cleanup function
+memory not freed at program exit
+Strengths
+supports forward and reverse traversal
+modular design
+includes statistics
+Weaknesses
+limited input validation
+no data persistence
 Suggested Improvements
-
-Add input validation for all fields
-Restrict valid weight ranges
-Add function to free entire list
-Add sorting (by weight or passenger ID)
-Store data in file for persistence
-
+add input validation
+implement full cleanup
+add file storage
+add sorting
 Summary
 
-The Baggage Services module demonstrates a practical implementation of a doubly linked list in a real-world scenario. It efficiently manages baggage records with insertion, deletion, searching, and reporting functionalities, making it a strong component of the Airport Flight Management System.
+The baggage management module uses a doubly linked list to efficiently manage baggage records. It supports insertion, deletion, searching, traversal, and reporting, making it a key part of the system.
