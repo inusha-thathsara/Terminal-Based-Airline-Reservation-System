@@ -9,29 +9,36 @@
 #include "ui.h"
 #include "passengers.h"
 
-Passenger passengers[MAX_PASSENGERS];
-int       passengerCount = 0;
-
-int passengerIDExists(int id) {
-    for (int i = 0; i < passengerCount; i++)
-        if (passengers[i].id == id) return 1;
+// ─── Check if Passenger ID already exists ────────────────────
+int passengerIDExists(struct Passenger passengers[], int count, int id) {
+    int i;
+    for (i = 0; i < count; i++) {
+        if (passengers[i].id == id) {
+            return 1;
+        }
+    }
     return 0;
 }
 
-void addPassenger() {
-    if (passengerCount >= MAX_PASSENGERS) {
+// ─── 1. Add Passenger ────────────────────────────────────────
+void addPassenger(struct Passenger passengers[], int* count) {
+    struct Passenger p;
+
+    if (*count >= MAX_PASSENGERS) {
         msgERR("Passenger capacity full!"); return;
     }
-    Passenger p;
+
     printf("\n");
     boxTop();
     boxTitle("NEW PASSENGER CHECK-IN");
     boxSep();
     boxEmpty();
     printf("  | Passenger ID    : "); scanf("%d", &p.id);
-    if (passengerIDExists(p.id)) {
+
+    if (passengerIDExists(passengers, *count, p.id)) {
         msgERR("Passenger ID already exists! Use a unique ID."); return;
     }
+
     printf("  | Full Name       : "); scanf(" %[^\n]", p.name);
     printf("  | Age             : "); scanf("%d", &p.age);
     printf("  | Passport No.    : "); scanf(" %s", p.passport);
@@ -40,34 +47,50 @@ void addPassenger() {
     printf("  | Class (Economy/Business/First): "); scanf(" %s", p.seatClass);
     boxEmpty();
     boxBottom();
-    passengers[passengerCount++] = p;
-    char msg[120];
+
+    passengers[*count] = p;
+    (*count)++;
+
+    char msg[100];
     sprintf(msg, "Passenger '%s' checked in. (ID: %d)", p.name, p.id);
     msgOK(msg);
 }
 
-void removePassenger() {
-    if (passengerCount == 0) { msgERR("No passengers in system."); return; }
-    int id;
+// ─── 2. Remove Passenger ─────────────────────────────────────
+void removePassenger(struct Passenger passengers[], int* count) {
+    int id, i, j;
+    char msg[100];
+
+    if (*count == 0) { msgERR("No passengers in system."); return; }
+
     printf("\n  Enter Passenger ID to remove: "); scanf("%d", &id);
-    for (int i = 0; i < passengerCount; i++) {
+
+    for (i = 0; i < *count; i++) {
         if (passengers[i].id == id) {
-            char msg[120];
             sprintf(msg, "Passenger '%s' removed.", passengers[i].name);
-            for (int j = i; j < passengerCount - 1; j++)
+
+            // Shift elements left
+            for (j = i; j < *count - 1; j++) {
                 passengers[j] = passengers[j + 1];
-            passengerCount--;
-            msgOK(msg); return;
+            }
+            (*count)--;
+            msgOK(msg);
+            return;
         }
     }
     msgERR("Passenger ID not found.");
 }
 
-void searchPassenger() {
-    if (passengerCount == 0) { msgERR("No passengers in system."); return; }
+// ─── 3. Search Passenger ─────────────────────────────────────
+void searchPassenger(struct Passenger passengers[], int count) {
     char query[MAX_NAME];
+    char idStr[10];
+    int i, found = 0;
+
+    if (count == 0) { msgERR("No passengers in system."); return; }
+
     printf("\n  Search Passenger (Name or ID): "); scanf(" %[^\n]", query);
-    int found = 0;
+
     printf("\n");
     boxTop();
     boxTitle("PASSENGER SEARCH RESULTS");
@@ -75,8 +98,9 @@ void searchPassenger() {
     printf("  | %-5s | %-18s | %-4s | %-14s | %-8s | %-8s |\n",
            "ID","NAME","AGE","DESTINATION","FLIGHT","CLASS");
     boxSep();
-    for (int i = 0; i < passengerCount; i++) {
-        char idStr[10]; sprintf(idStr, "%d", passengers[i].id);
+
+    for (i = 0; i < count; i++) {
+        sprintf(idStr, "%d", passengers[i].id);
         if (strstr(passengers[i].name, query) || strcmp(idStr, query) == 0) {
             printf("  | %-5d | %-18s | %-4d | %-14s | %-8s | %-8s |\n",
                 passengers[i].id, passengers[i].name, passengers[i].age,
@@ -86,12 +110,18 @@ void searchPassenger() {
         }
     }
     boxBottom();
+
     if (!found) msgERR("No matching passenger found.");
     else { char m[50]; sprintf(m, "%d record(s) found.", found); msgINFO(m); }
 }
 
-void displayAllPassengers() {
-    if (passengerCount == 0) { msgERR("No passengers registered."); return; }
+// ─── 4. Display All Passengers ───────────────────────────────
+void displayAllPassengers(struct Passenger passengers[], int count) {
+    int i;
+    char msg[60];
+
+    if (count == 0) { msgERR("No passengers registered."); return; }
+
     printf("\n");
     boxTop();
     boxTitle("PASSENGER MANIFEST");
@@ -99,22 +129,29 @@ void displayAllPassengers() {
     printf("  | %-5s | %-18s | %-4s | %-14s | %-8s | %-8s |\n",
            "ID","NAME","AGE","DESTINATION","FLIGHT","CLASS");
     boxSep();
-    for (int i = 0; i < passengerCount; i++)
+
+    for (i = 0; i < count; i++) {
         printf("  | %-5d | %-18s | %-4d | %-14s | %-8s | %-8s |\n",
             passengers[i].id, passengers[i].name, passengers[i].age,
             passengers[i].destination, passengers[i].flightNumber,
             passengers[i].seatClass);
+    }
+
     boxSep();
-    char msg[60]; sprintf(msg, "TOTAL PASSENGERS: %d", passengerCount);
+    sprintf(msg, "TOTAL PASSENGERS: %d", count);
     boxTitle(msg);
     boxBottom();
 }
 
-void updatePassenger() {
-    if (passengerCount == 0) { msgERR("No passengers to update."); return; }
-    int id;
+// ─── 5. Update Passenger ─────────────────────────────────────
+void updatePassenger(struct Passenger passengers[], int count) {
+    int id, i;
+
+    if (count == 0) { msgERR("No passengers to update."); return; }
+
     printf("\n  Enter Passenger ID to update: "); scanf("%d", &id);
-    for (int i = 0; i < passengerCount; i++) {
+
+    for (i = 0; i < count; i++) {
         if (passengers[i].id == id) {
             printf("\n");
             boxTop();
@@ -126,32 +163,38 @@ void updatePassenger() {
             printf("  | New Flight No.  : "); scanf(" %s", passengers[i].flightNumber);
             printf("  | New Class       : "); scanf(" %s", passengers[i].seatClass);
             boxBottom();
-            msgOK("Passenger record updated successfully."); return;
+            msgOK("Passenger record updated successfully.");
+            return;
         }
     }
     msgERR("Passenger ID not found.");
 }
 
-void passengerStatistics() {
-    if (passengerCount == 0) { msgERR("No passengers."); return; }
-    int eco = 0, bus = 0, fst = 0;
-    for (int i = 0; i < passengerCount; i++) {
-        if (strcmp(passengers[i].seatClass, "Economy") == 0) eco++;
+// ─── 6. Passenger Statistics (Additional Function) ───────────
+void passengerStatistics(struct Passenger passengers[], int count) {
+    int i, eco = 0, bus = 0, fst = 0;
+
+    if (count == 0) { msgERR("No passengers."); return; }
+
+    for (i = 0; i < count; i++) {
+        if (strcmp(passengers[i].seatClass, "Economy")  == 0) eco++;
         else if (strcmp(passengers[i].seatClass, "Business") == 0) bus++;
-        else if (strcmp(passengers[i].seatClass, "First") == 0) fst++;
+        else if (strcmp(passengers[i].seatClass, "First")    == 0) fst++;
     }
+
     printf("\n");
     boxTop();
     boxTitle("PASSENGER LOAD STATISTICS");
     boxSep();
-    printf("  | %-30s : %-30d |\n", "Total Passengers", passengerCount);
+    printf("  | %-30s : %-30d |\n", "Total Passengers", count);
     printf("  | %-30s : %-30d |\n", "Economy Class",    eco);
     printf("  | %-30s : %-30d |\n", "Business Class",   bus);
     printf("  | %-30s : %-30d |\n", "First Class",      fst);
     boxBottom();
 }
 
-void passengerMenu() {
+// ─── Menu ─────────────────────────────────────────────────────
+void passengerMenu(struct Passenger passengers[], int* count) {
     int c;
     do {
         printHeader("PASSENGER SERVICES");
@@ -173,13 +216,14 @@ void passengerMenu() {
         boxEmpty();
         boxDbl();
         printf("\n  PASSENGER SERVICES > "); scanf("%d", &c);
+
         switch(c) {
-            case 1: addPassenger();        break;
-            case 2: removePassenger();     break;
-            case 3: searchPassenger();     break;
-            case 4: displayAllPassengers();break;
-            case 5: updatePassenger();     break;
-            case 6: passengerStatistics(); break;
+            case 1: addPassenger(passengers, count);        break;
+            case 2: removePassenger(passengers, count);     break;
+            case 3: searchPassenger(passengers, *count);    break;
+            case 4: displayAllPassengers(passengers, *count);break;
+            case 5: updatePassenger(passengers, *count);    break;
+            case 6: passengerStatistics(passengers, *count);break;
             case 0: break;
             default: msgERR("Invalid selection.");
         }

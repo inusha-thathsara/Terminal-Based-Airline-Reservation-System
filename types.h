@@ -3,6 +3,7 @@
 
 // ============================================================
 //  SKYPORT TERMINAL — SHARED TYPE DEFINITIONS
+//  Lecturer Style
 // ============================================================
 
 #define MAX_PASSENGERS  100
@@ -13,8 +14,8 @@
 #define MAX_SCHEDULE    100
 #define WIDTH           70
 
-// ─── Passenger ───────────────────────────────────────────────
-typedef struct {
+// ─── Passenger (Array) ───────────────────────────────────────
+struct Passenger {
     int  id;
     char name[MAX_NAME];
     char destination[MAX_DEST];
@@ -22,10 +23,10 @@ typedef struct {
     int  age;
     char seatClass[20];
     char passport[20];
-} Passenger;
+};
 
-// ─── Flight Node (Singly & Doubly Linked List) ───────────────
-typedef struct FlightNode {
+// ─── Flight Node (Singly Linked List) ────────────────────────
+struct FlightNode {
     char flightNumber[MAX_FLIGHT_NO];
     char destination[MAX_DEST];
     char origin[MAX_DEST];
@@ -37,11 +38,15 @@ typedef struct FlightNode {
     char status[20];
     char aircraft[20];
     struct FlightNode* next;
-    struct FlightNode* prev;
-} FlightNode;
+};
+
+struct FlightList {
+    struct FlightNode* head;
+    struct FlightNode* tail;
+};
 
 // ─── Baggage Node (Doubly Linked List) ───────────────────────
-typedef struct BaggageNode {
+struct BaggageNode {
     int   baggageID;
     int   passengerID;
     char  ownerName[MAX_NAME];
@@ -50,10 +55,15 @@ typedef struct BaggageNode {
     char  tag[20];
     struct BaggageNode* next;
     struct BaggageNode* prev;
-} BaggageNode;
+};
+
+struct BaggageList {
+    struct BaggageNode* head;
+    struct BaggageNode* tail;
+};
 
 // ─── Gate Node (Circular Linked List) ────────────────────────
-typedef struct GateNode {
+struct GateNode {
     int  gateNumber;
     char terminal[10];
     char status[20];
@@ -62,35 +72,43 @@ typedef struct GateNode {
     char history[3][MAX_FLIGHT_NO];
     int  historyCount;
     struct GateNode* next;
-} GateNode;
+};
 
-// ─── Boarding Stack Node ──────────────────────────────────────
-typedef struct StackNode {
+struct GateList {
+    struct GateNode* head;
+};
+
+// ─── Stack Node (Boarding) ───────────────────────────────────
+struct StackNode {
     int  passengerID;
     char passengerName[MAX_NAME];
     char seatNumber[10];
     char boardingPass[20];
     struct StackNode* next;
-} StackNode;
+};
 
-// ─── Runway Queue Node ────────────────────────────────────────
-typedef struct QueueNode {
+struct Stack {
+    struct StackNode* top;
+};
+
+// ─── Queue Node (Runway) ─────────────────────────────────────
+struct QueueNode {
     char flightNumber[MAX_FLIGHT_NO];
     char destination[MAX_DEST];
     char scheduledTime[MAX_TIME];
     char type[10];
     int  priority;
     struct QueueNode* next;
-} QueueNode;
+};
 
-typedef struct {
-    QueueNode* front;
-    QueueNode* rear;
-    int        size;
-} RunwayQueue;
+struct Queue {
+    struct QueueNode* front;
+    struct QueueNode* rear;
+    int               size;
+};
 
-// ─── Schedule Entry ───────────────────────────────────────────
-typedef struct {
+// ─── Schedule Entry (Array + Sorting) ────────────────────────
+struct ScheduleEntry {
     char flightNumber[MAX_FLIGHT_NO];
     char origin[MAX_DEST];
     char destination[MAX_DEST];
@@ -100,6 +118,6 @@ typedef struct {
     int  availableSeats;
     char status[20];
     char aircraft[20];
-} ScheduleEntry;
+};
 
 #endif // TYPES_H

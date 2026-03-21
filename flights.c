@@ -10,74 +10,143 @@
 #include "ui.h"
 #include "flights.h"
 
-FlightNode* flightHead = NULL;
+// ─── Initialize List ──────────────────────────────────────────
+void initFlightList(struct FlightList* list) {
+    list->head = NULL;
+    list->tail = NULL;
+}
 
-int flightExists(const char* fn) {
-    FlightNode* curr = flightHead;
-    while (curr) {
-        if (strcmp(curr->flightNumber, fn) == 0) return 1;
-        curr = curr->next;
+// ─── Create New Flight Node ───────────────────────────────────
+struct FlightNode* createFlightNode(char* flightNumber, char* origin,
+                                     char* destination, char* departureTime,
+                                     char* arrivalTime, char* gate,
+                                     char* aircraft, int totalSeats) {
+    struct FlightNode* newNode;
+    newNode = (struct FlightNode*)malloc(sizeof(struct FlightNode));
+
+    if (newNode == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+
+    strcpy(newNode->flightNumber,  flightNumber);
+    strcpy(newNode->origin,        origin);
+    strcpy(newNode->destination,   destination);
+    strcpy(newNode->departureTime, departureTime);
+    strcpy(newNode->arrivalTime,   arrivalTime);
+    strcpy(newNode->gate,          gate);
+    strcpy(newNode->aircraft,      aircraft);
+    newNode->totalSeats     = totalSeats;
+    newNode->availableSeats = totalSeats;
+    strcpy(newNode->status, "On-Time");
+    newNode->next = NULL;
+
+    return newNode;
+}
+
+// ─── Check Duplicate ──────────────────────────────────────────
+int flightExists(struct FlightList* list, char* fn) {
+    struct FlightNode* temp = list->head;
+    while (temp != NULL) {
+        if (strcmp(temp->flightNumber, fn) == 0) return 1;
+        temp = temp->next;
     }
     return 0;
 }
 
-void addFlight() {
-    FlightNode* n = (FlightNode*)malloc(sizeof(FlightNode));
-    if (!n) { msgERR("Memory allocation failed."); return; }
+// ─── 1. Add Flight (Insert Rear) ─────────────────────────────
+void addFlight(struct FlightList* list) {
+    char flightNumber[MAX_FLIGHT_NO], origin[MAX_DEST];
+    char destination[MAX_DEST], departureTime[MAX_TIME];
+    char arrivalTime[MAX_TIME], gate[10], aircraft[20];
+    int  totalSeats;
+    struct FlightNode* newNode;
+
     printf("\n");
     boxTop();
     boxTitle("SCHEDULE NEW FLIGHT");
     boxSep();
     boxEmpty();
-    printf("  | Flight Number   : "); scanf(" %s", n->flightNumber);
-    if (flightExists(n->flightNumber)) {
-        msgERR("Flight number already exists!"); free(n); return;
+    printf("  | Flight Number   : "); scanf(" %s", flightNumber);
+
+    if (flightExists(list, flightNumber)) {
+        msgERR("Flight number already exists!"); return;
     }
-    printf("  | Origin          : "); scanf(" %[^\n]", n->origin);
-    printf("  | Destination     : "); scanf(" %[^\n]", n->destination);
-    printf("  | Departure Time  : "); scanf(" %s", n->departureTime);
-    printf("  | Arrival Time    : "); scanf(" %s", n->arrivalTime);
-    printf("  | Gate            : "); scanf(" %s", n->gate);
-    printf("  | Aircraft Type   : "); scanf(" %s", n->aircraft);
-    printf("  | Total Seats     : "); scanf("%d", &n->totalSeats);
-    n->availableSeats = n->totalSeats;
-    strcpy(n->status, "On-Time");
-    n->next = NULL;
+
+    printf("  | Origin          : "); scanf(" %[^\n]", origin);
+    printf("  | Destination     : "); scanf(" %[^\n]", destination);
+    printf("  | Departure Time  : "); scanf(" %s", departureTime);
+    printf("  | Arrival Time    : "); scanf(" %s", arrivalTime);
+    printf("  | Gate            : "); scanf(" %s", gate);
+    printf("  | Aircraft Type   : "); scanf(" %s", aircraft);
+    printf("  | Total Seats     : "); scanf("%d", &totalSeats);
     boxEmpty();
     boxBottom();
-    if (!flightHead) { flightHead = n; }
-    else {
-        FlightNode* t = flightHead;
-        while (t->next) t = t->next;
-        t->next = n;
+
+    newNode = createFlightNode(flightNumber, origin, destination,
+                               departureTime, arrivalTime, gate,
+                               aircraft, totalSeats);
+    if (newNode == NULL) return;
+
+    // Insert at rear — singly linked list
+    if (list->head == NULL) {
+        list->head = newNode;
+        list->tail = newNode;
+    } else {
+        list->tail->next = newNode;
+        list->tail = newNode;
     }
-    char msg[120];
-    sprintf(msg, "Flight %s to %s scheduled!", n->flightNumber, n->destination);
+
+    char msg[100];
+    sprintf(msg, "Flight %s to %s scheduled!", flightNumber, destination);
     msgOK(msg);
 }
 
-void removeFlight() {
-    if (!flightHead) { msgERR("No flights in system."); return; }
+// ─── 2. Remove Flight ─────────────────────────────────────────
+void removeFlight(struct FlightList* list) {
     char fn[MAX_FLIGHT_NO];
+    struct FlightNode* temp;
+    struct FlightNode* prev;
+    char msg[60];
+
+    if (list->head == NULL) { msgERR("No flights in system."); return; }
+
     printf("\n  Enter Flight Number to cancel: "); scanf(" %s", fn);
-    FlightNode *curr = flightHead, *prev = NULL;
-    while (curr) {
-        if (strcmp(curr->flightNumber, fn) == 0) {
-            if (prev) prev->next = curr->next;
-            else flightHead = curr->next;
-            char msg[60]; sprintf(msg, "Flight %s cancelled and removed.", fn);
-            free(curr); msgOK(msg); return;
+
+    temp = list->head;
+    prev = NULL;
+
+    while (temp != NULL) {
+        if (strcmp(temp->flightNumber, fn) == 0) {
+            if (prev == NULL) {
+                list->head = temp->next;
+            } else {
+                prev->next = temp->next;
+            }
+            if (temp->next == NULL) {
+                list->tail = prev;
+            }
+            sprintf(msg, "Flight %s cancelled and removed.", fn);
+            free(temp);
+            msgOK(msg);
+            return;
         }
-        prev = curr; curr = curr->next;
+        prev = temp;
+        temp = temp->next;
     }
     msgERR("Flight not found.");
 }
 
-void searchFlight() {
-    if (!flightHead) { msgERR("No flights in system."); return; }
+// ─── 3. Search Flight ─────────────────────────────────────────
+void searchFlight(struct FlightList* list) {
     char query[MAX_DEST];
-    printf("\n  Search (Flight No. or Destination): "); scanf(" %[^\n]", query);
+    struct FlightNode* temp;
     int found = 0;
+
+    if (list->head == NULL) { msgERR("No flights in system."); return; }
+
+    printf("\n  Search (Flight No. or Destination): "); scanf(" %[^\n]", query);
+
     printf("\n");
     boxTop();
     boxTitle("FLIGHT SEARCH RESULTS");
@@ -85,23 +154,30 @@ void searchFlight() {
     printf("  | %-8s | %-13s | %-13s | %-7s | %-7s | %-5s | %-7s |\n",
            "FLIGHT","FROM","TO","DEP","ARR","SEATS","STATUS");
     boxSep();
-    FlightNode* curr = flightHead;
-    while (curr) {
-        if (strstr(curr->flightNumber, query) || strstr(curr->destination, query)) {
+
+    temp = list->head;
+    while (temp != NULL) {
+        if (strstr(temp->flightNumber, query) || strstr(temp->destination, query)) {
             printf("  | %-8s | %-13s | %-13s | %-7s | %-7s | %-5d | %-7s |\n",
-                curr->flightNumber, curr->origin, curr->destination,
-                curr->departureTime, curr->arrivalTime,
-                curr->availableSeats, curr->status);
+                temp->flightNumber, temp->origin, temp->destination,
+                temp->departureTime, temp->arrivalTime,
+                temp->availableSeats, temp->status);
             found++;
         }
-        curr = curr->next;
+        temp = temp->next;
     }
     boxBottom();
     if (!found) msgERR("No matching flight found.");
 }
 
-void displayAllFlights() {
-    if (!flightHead) { msgERR("No flights scheduled."); return; }
+// ─── 4. Display All Flights ───────────────────────────────────
+void displayAllFlights(struct FlightList* list) {
+    struct FlightNode* temp;
+    int count = 0;
+    char msg[50];
+
+    if (list->head == NULL) { msgERR("No flights scheduled."); return; }
+
     printf("\n");
     boxTop();
     boxTitle("FLIGHT OPERATIONS BOARD");
@@ -109,46 +185,59 @@ void displayAllFlights() {
     printf("  | %-8s | %-13s | %-13s | %-7s | %-7s | %-5s | %-7s |\n",
            "FLIGHT","FROM","TO","DEP","ARR","SEATS","STATUS");
     boxSep();
-    FlightNode* curr = flightHead; int count = 0;
-    while (curr) {
+
+    temp = list->head;
+    while (temp != NULL) {
         printf("  | %-8s | %-13s | %-13s | %-7s | %-7s | %-5d | %-7s |\n",
-            curr->flightNumber, curr->origin, curr->destination,
-            curr->departureTime, curr->arrivalTime,
-            curr->availableSeats, curr->status);
-        curr = curr->next; count++;
+            temp->flightNumber, temp->origin, temp->destination,
+            temp->departureTime, temp->arrivalTime,
+            temp->availableSeats, temp->status);
+        temp = temp->next;
+        count++;
     }
+
     boxSep();
-    char msg[50]; sprintf(msg, "TOTAL FLIGHTS: %d", count);
+    sprintf(msg, "TOTAL FLIGHTS: %d", count);
     boxTitle(msg);
     boxBottom();
 }
 
-void updateFlightStatus() {
-    if (!flightHead) { msgERR("No flights in system."); return; }
+// ─── 5. Update Flight Status ──────────────────────────────────
+void updateFlightStatus(struct FlightList* list) {
     char fn[MAX_FLIGHT_NO];
+    struct FlightNode* temp;
+
+    if (list->head == NULL) { msgERR("No flights in system."); return; }
+
     printf("\n  Enter Flight Number: "); scanf(" %s", fn);
-    FlightNode* curr = flightHead;
-    while (curr) {
-        if (strcmp(curr->flightNumber, fn) == 0) {
+
+    temp = list->head;
+    while (temp != NULL) {
+        if (strcmp(temp->flightNumber, fn) == 0) {
             printf("  Status (On-Time/Delayed/Cancelled/Boarding): ");
-            scanf(" %s", curr->status);
-            msgOK("Flight status updated."); return;
+            scanf(" %s", temp->status);
+            msgOK("Flight status updated.");
+            return;
         }
-        curr = curr->next;
+        temp = temp->next;
     }
     msgERR("Flight not found.");
 }
 
-void countFlights() {
+// ─── 6. Count Flights — Additional Function ───────────────────
+void countFlights(struct FlightList* list) {
+    struct FlightNode* temp;
     int count = 0, ontime = 0, delayed = 0, cancelled = 0;
-    FlightNode* curr = flightHead;
-    while (curr) {
+
+    temp = list->head;
+    while (temp != NULL) {
         count++;
-        if (strcmp(curr->status, "On-Time")   == 0) ontime++;
-        else if (strcmp(curr->status, "Delayed")   == 0) delayed++;
-        else if (strcmp(curr->status, "Cancelled") == 0) cancelled++;
-        curr = curr->next;
+        if      (strcmp(temp->status, "On-Time")   == 0) ontime++;
+        else if (strcmp(temp->status, "Delayed")   == 0) delayed++;
+        else if (strcmp(temp->status, "Cancelled") == 0) cancelled++;
+        temp = temp->next;
     }
+
     printf("\n");
     boxTop();
     boxTitle("FLIGHT OPERATIONS SUMMARY");
@@ -160,7 +249,8 @@ void countFlights() {
     boxBottom();
 }
 
-void flightMenu() {
+// ─── Menu ─────────────────────────────────────────────────────
+void flightMenu(struct FlightList* list) {
     int c;
     do {
         printHeader("FLIGHT OPERATIONS");
@@ -182,13 +272,14 @@ void flightMenu() {
         boxEmpty();
         boxDbl();
         printf("\n  FLIGHT OPS > "); scanf("%d", &c);
+
         switch(c) {
-            case 1: addFlight();         break;
-            case 2: removeFlight();      break;
-            case 3: searchFlight();      break;
-            case 4: displayAllFlights(); break;
-            case 5: updateFlightStatus();break;
-            case 6: countFlights();      break;
+            case 1: addFlight(list);          break;
+            case 2: removeFlight(list);       break;
+            case 3: searchFlight(list);       break;
+            case 4: displayAllFlights(list);  break;
+            case 5: updateFlightStatus(list); break;
+            case 6: countFlights(list);       break;
             case 0: break;
             default: msgERR("Invalid selection.");
         }
