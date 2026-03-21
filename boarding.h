@@ -4,17 +4,18 @@
 #include "types.h"
 
 // ============================================================
-//  MEMBER 5 — BOARDING CONTROL
+//  MEMBER 5 — BOARDING CONTROL (STACK)
 // ============================================================
 
-extern StackNode* boardingTop;
-
-int  isDuplicateBoarding(int id);
-void pushBoarding();
-void popBoarding();
-void peekBoarding();
-void displayBoardingList();
-void undoBoarding();
-void boardingMenu();
+void initStack(struct Stack* stack);
+struct StackNode* createStackNode(int passengerID, char* passengerName,
+                                   char* seatNumber);
+int  isDuplicateBoarding(struct Stack* stack, int id);
+void pushBoarding(struct Stack* stack);
+void popBoarding(struct Stack* stack);
+void peekBoarding(struct Stack* stack);
+void displayBoardingList(struct Stack* stack);
+void undoBoarding(struct Stack* stack);
+void boardingMenu(struct Stack* stack);
 
 #endif

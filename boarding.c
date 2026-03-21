@@ -9,66 +9,118 @@
 #include "types.h"
 #include "ui.h"
 #include "boarding.h"
-#include "passengers.h"
 
-StackNode* boardingTop = NULL;
+// ─── Initialize Stack ─────────────────────────────────────────
+void initStack(struct Stack* stack) {
+    stack->top = NULL;
+}
 
-int isDuplicateBoarding(int id) {
-    if (!passengerIDExists(id)) return 2;
-    StackNode* curr = boardingTop;
-    while (curr) { if (curr->passengerID == id) return 1; curr = curr->next; }
+// ─── Create New Stack Node ────────────────────────────────────
+struct StackNode* createStackNode(int passengerID, char* passengerName,
+                                   char* seatNumber) {
+    struct StackNode* newNode;
+    newNode = (struct StackNode*)malloc(sizeof(struct StackNode));
+
+    if (newNode == NULL) {
+        printf("Memory allocation failed\n");
+        return NULL;
+    }
+
+    newNode->passengerID = passengerID;
+    strcpy(newNode->passengerName, passengerName);
+    strcpy(newNode->seatNumber,    seatNumber);
+    sprintf(newNode->boardingPass, "BP-%04d", passengerID);
+    newNode->next = NULL;
+
+    return newNode;
+}
+
+// ─── Check Duplicate Boarding ─────────────────────────────────
+int isDuplicateBoarding(struct Stack* stack, int id) {
+    struct StackNode* temp = stack->top;
+    while (temp != NULL) {
+        if (temp->passengerID == id) return 1;
+        temp = temp->next;
+    }
     return 0;
 }
 
-void pushBoarding() {
-    StackNode* n = (StackNode*)malloc(sizeof(StackNode));
-    if (!n) { msgERR("Memory allocation failed."); return; }
+// ─── 1. Push — Board Passenger ───────────────────────────────
+void pushBoarding(struct Stack* stack) {
+    int passengerID;
+    char passengerName[MAX_NAME], seatNumber[10];
+    struct StackNode* newNode;
+    char msg[100];
+
     printf("\n");
     boxTop();
     boxTitle("PASSENGER BOARDING");
     boxSep();
     boxEmpty();
-    printf("  | Passenger ID    : "); scanf("%d", &n->passengerID);
-    int dup = isDuplicateBoarding(n->passengerID);
-    if (dup == 2) { msgERR("Passenger ID not found in system!"); free(n); return; }
-    if (dup == 1) { msgERR("Passenger already on board!"); free(n); return; }
-    printf("  | Passenger Name  : "); scanf(" %[^\n]", n->passengerName);
-    printf("  | Seat Number     : "); scanf(" %s", n->seatNumber);
-    sprintf(n->boardingPass, "BP-%04d", n->passengerID);
+    printf("  | Passenger ID    : "); scanf("%d", &passengerID);
+
+    if (isDuplicateBoarding(stack, passengerID)) {
+        msgERR("Passenger already on board!"); return;
+    }
+
+    printf("  | Passenger Name  : "); scanf(" %[^\n]", passengerName);
+    printf("  | Seat Number     : "); scanf(" %s", seatNumber);
     boxEmpty();
     boxBottom();
-    n->next     = boardingTop;
-    boardingTop = n;
-    char msg[100];
+
+    newNode = createStackNode(passengerID, passengerName, seatNumber);
+    if (newNode == NULL) return;
+
+    // Push to top of stack
+    if (stack->top == NULL) {
+        stack->top = newNode;
+    } else {
+        newNode->next = stack->top;
+        stack->top    = newNode;
+    }
+
     sprintf(msg, "Boarding confirmed. Seat: %s | Pass: %s",
-            n->seatNumber, n->boardingPass);
+            seatNumber, newNode->boardingPass);
     msgOK(msg);
 }
 
-void popBoarding() {
-    if (!boardingTop) { msgERR("No passengers on board."); return; }
-    StackNode* temp = boardingTop;
-    boardingTop = boardingTop->next;
+// ─── 2. Pop — Deboard Passenger ──────────────────────────────
+void popBoarding(struct Stack* stack) {
+    struct StackNode* temp;
     char msg[80];
+
+    if (stack->top == NULL) { msgERR("No passengers on board."); return; }
+
+    temp       = stack->top;
+    stack->top = stack->top->next;
+
     sprintf(msg, "%s (Seat %s) deboarded.", temp->passengerName, temp->seatNumber);
-    free(temp); msgOK(msg);
+    free(temp);
+    msgOK(msg);
 }
 
-void peekBoarding() {
-    if (!boardingTop) { msgERR("No passengers on board."); return; }
+// ─── 3. Peek — View Last Boarded ─────────────────────────────
+void peekBoarding(struct Stack* stack) {
+    if (stack->top == NULL) { msgERR("No passengers on board."); return; }
+
     printf("\n");
     boxTop();
     boxTitle("LAST BOARDED PASSENGER");
     boxSep();
-    printf("  | %-20s : %-40s |\n", "Name",         boardingTop->passengerName);
-    printf("  | %-20s : %-40d |\n", "Passenger ID", boardingTop->passengerID);
-    printf("  | %-20s : %-40s |\n", "Seat Number",  boardingTop->seatNumber);
-    printf("  | %-20s : %-40s |\n", "Boarding Pass",boardingTop->boardingPass);
+    printf("  | %-20s : %-40s |\n", "Name",          stack->top->passengerName);
+    printf("  | %-20s : %-40d |\n", "Passenger ID",  stack->top->passengerID);
+    printf("  | %-20s : %-40s |\n", "Seat Number",   stack->top->seatNumber);
+    printf("  | %-20s : %-40s |\n", "Boarding Pass", stack->top->boardingPass);
     boxBottom();
 }
 
-void displayBoardingList() {
-    if (!boardingTop) { msgERR("No passengers boarded yet."); return; }
+// ─── 4. Display All Boarded ───────────────────────────────────
+void displayBoardingList(struct Stack* stack) {
+    struct StackNode* temp;
+    int pos = 1;
+
+    if (stack->top == NULL) { msgERR("No passengers boarded yet."); return; }
+
     printf("\n");
     boxTop();
     boxTitle("BOARDING LIST");
@@ -76,23 +128,26 @@ void displayBoardingList() {
     printf("  | %-4s | %-5s | %-20s | %-8s | %-12s |\n",
            "NO","ID","NAME","SEAT","BOARDING PASS");
     boxSep();
-    StackNode* curr = boardingTop; int pos = 1;
-    while (curr) {
+
+    temp = stack->top;
+    while (temp != NULL) {
         printf("  | %-4d | %-5d | %-20s | %-8s | %-12s |\n",
-            pos++, curr->passengerID, curr->passengerName,
-            curr->seatNumber, curr->boardingPass);
-        curr = curr->next;
+            pos++, temp->passengerID, temp->passengerName,
+            temp->seatNumber, temp->boardingPass);
+        temp = temp->next;
     }
     boxBottom();
 }
 
-void undoBoarding() {
-    if (!boardingTop) { msgERR("Nothing to undo."); return; }
+// ─── 5. Undo Last Boarding ───────────────────────────────────
+void undoBoarding(struct Stack* stack) {
+    if (stack->top == NULL) { msgERR("Nothing to undo."); return; }
     msgINFO("Reversing last boarding action...");
-    popBoarding();
+    popBoarding(stack);
 }
 
-void boardingMenu() {
+// ─── Menu ─────────────────────────────────────────────────────
+void boardingMenu(struct Stack* stack) {
     int c;
     do {
         printHeader("BOARDING CONTROL");
@@ -113,12 +168,13 @@ void boardingMenu() {
         boxEmpty();
         boxDbl();
         printf("\n  BOARDING CONTROL > "); scanf("%d", &c);
+
         switch(c) {
-            case 1: pushBoarding();       break;
-            case 2: popBoarding();        break;
-            case 3: peekBoarding();       break;
-            case 4: displayBoardingList();break;
-            case 5: undoBoarding();       break;
+            case 1: pushBoarding(stack);       break;
+            case 2: popBoarding(stack);        break;
+            case 3: peekBoarding(stack);       break;
+            case 4: displayBoardingList(stack);break;
+            case 5: undoBoarding(stack);       break;
             case 0: break;
             default: msgERR("Invalid selection.");
         }
