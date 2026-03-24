@@ -1,0 +1,102 @@
+# depslib dependency file v1.0
+1773582817 source:d:\documents\dsa02\dsa_project\baggage.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"types.h"
+	"ui.h"
+	"baggage.h"
+
+1773582831 d:\documents\dsa02\dsa_project\baggage.h
+	"types.h"
+
+1773582827 d:\documents\dsa02\dsa_project\types.h
+
+1773582820 source:d:\documents\dsa02\dsa_project\boarding.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"types.h"
+	"ui.h"
+	"boarding.h"
+
+1773582834 d:\documents\dsa02\dsa_project\boarding.h
+	"types.h"
+
+1773582815 source:d:\documents\dsa02\dsa_project\flights.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"types.h"
+	"ui.h"
+	"flights.h"
+
+1773582830 d:\documents\dsa02\dsa_project\flights.h
+	"types.h"
+
+1773582819 source:d:\documents\dsa02\dsa_project\gates.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"types.h"
+	"ui.h"
+	"gates.h"
+
+1773582833 d:\documents\dsa02\dsa_project\gates.h
+	"types.h"
+
+1773169959 source:d:\documents\dsa02\dsa_project\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"types.h"
+	"passengers.h"
+	"flights.h"
+	"baggage.h"
+	"gates.h"
+	"boarding.h"
+	"runway.h"
+	"schedule.h"
+
+1773582828 d:\documents\dsa02\dsa_project\passengers.h
+	"types.h"
+
+1773582836 d:\documents\dsa02\dsa_project\runway.h
+	"types.h"
+
+1773582838 d:\documents\dsa02\dsa_project\schedule.h
+	"types.h"
+
+1773582811 source:d:\documents\dsa02\dsa_project\passengers.c
+	<stdio.h>
+	<string.h>
+	"types.h"
+	"ui.h"
+	"passengers.h"
+
+1773582822 source:d:\documents\dsa02\dsa_project\runway.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"types.h"
+	"ui.h"
+	"runway.h"
+
+1773582825 source:d:\documents\dsa02\dsa_project\schedule.c
+	<stdio.h>
+	<string.h>
+	"types.h"
+	"ui.h"
+	"schedule.h"
+
+1773582804 d:\documents\dsa02\dsa_project\ui.h
+
+1773582840 source:d:\documents\dsa02\dsa_project\ui.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	"types.h"
+	"ui.h"
+	"flights.h"
+
