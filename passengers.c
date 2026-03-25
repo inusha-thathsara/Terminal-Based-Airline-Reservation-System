@@ -1,4 +1,4 @@
-/* passengers.c - Passenger Services (Array) */
+
 #include <stdio.h>
 #include "ui.h"
 #include "utils.h"
