@@ -1,4 +1,4 @@
-/* ui.h - User Interface Functions Header */
+
 #ifndef UI_H
 #define UI_H
 
