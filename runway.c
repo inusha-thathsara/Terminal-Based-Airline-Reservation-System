@@ -1,4 +1,4 @@
-/* runway.c - Runway Control (Queue) */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "ui.h"
