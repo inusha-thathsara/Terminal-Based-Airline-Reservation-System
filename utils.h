@@ -1,4 +1,4 @@
-/* utils.h - Utility Functions Header */
+
 #ifndef UTILS_H
 #define UTILS_H
 
