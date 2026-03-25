@@ -1,4 +1,4 @@
-/* gates.h - Gate Control Header (Circular Linked List) */
+
 #ifndef GATES_H
 #define GATES_H
 
