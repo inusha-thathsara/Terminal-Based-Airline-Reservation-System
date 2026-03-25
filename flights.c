@@ -1,4 +1,4 @@
-/* flights.c - Flight Operations (Singly Linked List) */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "ui.h"
