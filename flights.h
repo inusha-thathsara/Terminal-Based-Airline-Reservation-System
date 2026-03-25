@@ -1,4 +1,4 @@
-/* flights.h - Flight Operations Header (Singly Linked List) */
+
 #ifndef FLIGHTS_H
 #define FLIGHTS_H
 
