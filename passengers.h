@@ -1,4 +1,4 @@
-/* passengers.h - Passenger Services Header (Array) */
+
 #ifndef PASSENGERS_H
 #define PASSENGERS_H
 
