@@ -1,4 +1,4 @@
-/* runway.h - Runway Control Header (Queue) */
+
 #ifndef RUNWAY_H
 #define RUNWAY_H
 
