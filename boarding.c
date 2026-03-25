@@ -1,4 +1,4 @@
-/* boarding.c - Boarding Control (Stack) */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "ui.h"
