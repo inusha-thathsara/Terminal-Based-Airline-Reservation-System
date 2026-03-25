@@ -1,5 +1,4 @@
 
-/* utils.c - Utility Functions (No string.h) */
 #include "utils.h"
 
 int manualStrLen(const char* str) {
