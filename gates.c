@@ -1,4 +1,4 @@
-/* gates.c - Gate Control (Circular Linked List) */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "ui.h"
