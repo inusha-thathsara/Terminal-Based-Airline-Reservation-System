@@ -1,4 +1,4 @@
-/* baggage.h - Baggage Services Header (Doubly Linked List) */
+
 #ifndef BAGGAGE_H
 #define BAGGAGE_H
 
