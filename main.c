@@ -1,4 +1,4 @@
-/* main.c - Main Menu and Program Entry Point */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "ui.h"
