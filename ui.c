@@ -1,4 +1,4 @@
-/* ui.c - User Interface Functions */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
