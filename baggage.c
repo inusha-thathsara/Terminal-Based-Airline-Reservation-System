@@ -1,4 +1,4 @@
-/* baggage.c - Baggage Services (Doubly Linked List) */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "ui.h"
