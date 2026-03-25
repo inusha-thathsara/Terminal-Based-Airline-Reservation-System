@@ -1,4 +1,4 @@
-/* boarding.h - Boarding Control Header (Stack) */
+
 #ifndef BOARDING_H
 #define BOARDING_H
 
